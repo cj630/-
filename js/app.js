@@ -145,13 +145,13 @@ let investorChartInstance = null;
 // ====================================================
 // ضع معلومات قاعدة بياناتك المرتبطة بـ Firebase هنا مكان القيم الوهمية
 const firebaseConfig = {
-    apiKey: "ضع_المفتاح_هنا",
-    authDomain: "your-project.firebaseapp.com",
-    databaseURL: "https://your-project-default-rtdb.firebaseio.com",
-    projectId: "your-project",
-    storageBucket: "your-project.appspot.com",
-    messagingSenderId: "123",
-    appId: "1:123:web:abc"
+    apiKey: "AIzaSyCXWc0XLn2y3MG1mCRrZkliNgGJrc0dGgPg",
+    authDomain: "al-oaset.firebaseapp.com",
+    databaseURL: "https://al-oaset-default-rtdb.firebaseio.com",
+    projectId: "al-oaset",
+    storageBucket: "al-oaset.firebasestorage.app",
+    messagingSenderId: "257766691014",
+    appId: "1:257766691014:web:eac168ac7dc6d654b8c7c7"
 };
 
 // تفعيل المزامنة إن تم وضع المفتاح السري
