@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>شركة الوسيط - FinTech Platform</title>
+    
+    <!-- PWA Settings -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="شركة الوسيط">
+    <link rel="apple-touch-icon" href="https://ui-avatars.com/api/?name=SB&background=1e3a8a&color=fff&size=512">
+    
+    <!-- Firebase SDK (Compat Version for simple CDN usage) -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    
+    <!-- Tailwind CSS with custom colors config -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Cairo', 'sans-serif'] },
+                    colors: {
+                        brand: {
+                            50: '#eff6ff', 100: '#dbeafe', 500: '#3b82f6', 600: '#2563eb', 900: '#1e3a8a'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="css/style.css">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <!-- Chart.js for data visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Anti-Inspection Shield -->
+    <script>
+        // Disable Right-Click Context Menu
+        document.addEventListener('contextmenu', event => event.preventDefault());
+
+        // Disable Keyboard Shortcuts for DevTools & Source (F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+Shift+C, Ctrl+U)
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'F12' || 
+                (e.ctrlKey && e.shiftKey && ['I','J','C'].includes(e.key)) ||
+                (e.ctrlKey && e.key === 'U') ||
+                (e.ctrlKey && e.key === 'u')) {
+                e.preventDefault();
+                return false;
+            }
+        });
+    </script>
+</head>
+<body class="min-h-screen relative font-sans antialiased text-slate-800 dark:text-slate-200 overflow-x-hidden select-none">
+
+    <!-- Ultra-Smooth Performance Gradient Background -->
+    <div class="fixed inset-0 pointer-events-none z-0 bg-gradient-to-tr from-blue-100/40 via-transparent to-emerald-50/40 dark:from-blue-900/10 dark:via-transparent dark:to-indigo-900/10"></div>
+
+    <!-- Theme Toggler -->
+    <button id="theme-toggle" class="fixed top-4 left-4 z-50 flex items-center justify-center w-10 h-10 rounded-full premium-card text-xl hover:scale-110 transition-transform">
+        🌙
+    </button>
+
+    <!-- Authentication / Switcher Screen -->
+    <div id="login-page" class="fixed inset-0 z-40 bg-[var(--bg-app)] flex flex-col items-center justify-center p-6 transition-opacity duration-500">
+        
+        <!-- Saved Profiles Selector -->
+        <div id="profiles-container" class="hidden w-full max-w-lg mb-8 text-center animate-[fade-in_0.5s_ease]">
+            <h1 class="text-3xl font-extrabold text-gradient-blue mb-2">من يستثمر الآن؟</h1>
+            <p class="text-slate-500 mb-8 font-semibold text-sm">اختر حسابك للدخول السريع بضغطة واحدة</p>
+            
+            <div id="profiles-list" class="flex flex-wrap justify-center gap-6">
+                <!-- Javascript will inject profile icons here -->
+            </div>
+            
+            <div class="mt-8 flex flex-col gap-4">
+                <button onclick="showLoginForm()" class="text-sm font-bold text-slate-500 hover:text-blue-500 transition-colors flex items-center justify-center gap-2 mx-auto">
+                    <i class='bx bx-plus-circle text-lg'></i> الدخول بحساب مختلف
+                </button>
+                <div class="pt-4 border-t border-[var(--border-subtle)] w-full max-w-xs mx-auto text-center">
+                    <p class="text-xs text-slate-500 font-bold mb-3">ليس لديك حساب استثماري؟</p>
+                    <a href="https://t.me/r3prs" target="_blank" class="w-full bg-[var(--bg-app)] hover:bg-blue-50 dark:hover:bg-blue-900/20 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800 font-bold py-2.5 px-4 rounded-lg transition duration-200 flex justify-center items-center gap-2">
+                        <i class='bx bxl-telegram text-lg'></i>
+                        <span>تواصل معنا لشراء حساب</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Login Form (Hidden if profiles exist, unless requested) -->
+        <div id="login-form-container" class="premium-card w-full max-w-sm p-8 text-center hidden">
+            <h2 class="text-2xl font-extrabold text-gradient-blue mb-2">شركة الوسيط</h2>
+            <p class="text-slate-500 dark:text-slate-400 mb-8 font-semibold text-xs border-b border-[var(--border-subtle)] pb-4">منصتك الموثوقة للاستثمار الاحترافي</p>
+            
+            <div class="space-y-5 text-right">
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-1 ml-1" for="log-user">اسم الدخول</label>
+                    <div class="relative">
+                        <i class='bx bx-user absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg'></i>
+                        <input id="log-user" type="text" placeholder="أدخل اسم الحساب..." class="input-premium pr-10">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-1 ml-1" for="log-pass">كلمة المرور</label>
+                    <div class="relative">
+                        <i class='bx bx-lock-alt absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg'></i>
+                        <input id="log-pass" type="password" placeholder="••••••••" class="input-premium pr-10">
+                    </div>
+                </div>
+
+                <button onclick="loginWithPassword()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 mt-4 rounded-lg transition duration-200 flex justify-center items-center gap-2 shadow-md">
+                    <span>متابعة</span>
+                    <i class='bx bx-right-arrow-alt text-xl'></i>
+                </button>
+
+                <div class="flex items-center gap-2 text-xs font-bold text-slate-400 justify-center pt-2 cursor-pointer" onclick="backToProfilesIfPossible()">
+                    <span id="back-profiles-btn" class="hidden hover:text-blue-500 transition-colors">العودة لقائمة الحسابات &larr;</span>
+                </div>
+
+                <div class="mt-4 pt-4 border-t border-[var(--border-subtle)] text-center">
+                    <p class="text-xs text-slate-500 font-bold mb-3">ليس لديك حساب استثماري؟</p>
+                    <a href="https://t.me/r3prs" target="_blank" class="w-full bg-[var(--bg-app)] hover:bg-blue-50 dark:hover:bg-blue-900/20 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800 font-bold py-2.5 rounded-lg transition duration-200 flex justify-center items-center gap-2 relative z-50">
+                        <i class='bx bxl-telegram text-lg'></i>
+                        <span>لشراء وإنشاء حساب، تواصل معنا</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Dashboard Application -->
+    <div id="main-content" class="hidden min-h-screen flex flex-col pt-20 pb-10">
+        
+        <!-- Header Nav FinTech Style -->
+        <header class="fixed top-0 inset-x-0 z-30 h-16 bg-[var(--bg-card)] border-b border-[var(--border-subtle)] flex justify-between items-center px-6" style="backdrop-filter: var(--blur-val); -webkit-backdrop-filter: var(--blur-val); transform: translateZ(0);">
+            
+            <!-- Profile Account Menu -->
+            <div class="relative inline-block text-right">
+                <button onclick="toggleDropdown('header-user-menu')" class="flex items-center gap-3 hover:bg-[var(--border-subtle)] p-1.5 rounded-lg transition-colors border border-transparent hover:border-[var(--border-subtle)]">
+                    <div id="avatar-circle" class="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/40 border border-blue-500/20 flex items-center justify-center text-blue-600 dark:text-blue-400 font-black shadow-inner">
+                        A
+                    </div>
+                    <div class="flex flex-col text-right items-start">
+                        <span id="name-tag" class="font-bold text-sm md:text-md"></span>
+                        <span id="role-tag" class="text-[10px] font-bold text-slate-500 uppercase"></span>
+                    </div>
+                    <i class='bx bx-chevron-down text-slate-400'></i>
+                </button>
+                
+                <!-- FinTech Account Switcher Dropdown -->
+                <div id="header-user-menu" class="action-menu account-menu absolute mt-2 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-card)] shadow-xl divide-y divide-[var(--border-subtle)]">
+                    <div class="px-4 py-3">
+                        <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2 text-right">جلسات الدخول النشطة</p>
+                        <div id="active-sessions-list" class="space-y-1">
+                            <!-- JS Inject profiles -->
+                        </div>
+                    </div>
+                    
+                    <div class="py-1">
+                        <button onclick="logoutThisAccount()" class="group flex items-center gap-2 px-4 py-2.5 text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/50 w-full text-right font-bold transition-colors">
+                            <i class='bx bx-log-out text-lg text-slate-400 group-hover:text-red-500 transition-colors'></i> تسجيل خروج المستثمر الحالي
+                        </button>
+                        <button onclick="logoutAllAccounts()" class="group flex items-center gap-2 px-4 py-2.5 text-xs text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10 w-full text-right font-bold transition-colors">
+                            <i class='bx bx-block text-lg group-hover:scale-110 transition'></i> تحييد الخزنة (طرد جميع الحسابات)
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Logo -->
+            <div class="flex items-center gap-3">
+                <div class="flex items-center gap-2 text-xl font-black text-gradient-blue flex-row-reverse">
+                    <span class="hidden sm:inline">شركة الوسيط</span>
+                    <i class='bx bxs-pie-chart-alt-2'></i> 
+                </div>
+            </div>
+        </header>
+
+        <div class="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 space-y-8">
+
+            <!-- Administrator Dashboard -->
+            <div id="owner-box" class="hidden space-y-6">
+                
+                <div class="flex flex-col sm:flex-row gap-4 items-center justify-between mb-2">
+                    <h2 class="text-2xl font-extrabold">العمليات الإدارية والمقاصة</h2>
+                    <button onclick="document.getElementById('add-user-form').classList.toggle('hidden')" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg flex gap-2 items-center text-sm transition">
+                        <span>فتح محفظة جديدة</span> <i class='bx bx-plus'></i>
+                    </button>
+                </div>
+
+                <!-- Add User Form (Collapsible) -->
+                <div id="add-user-form" class="premium-card p-6 hidden animate-[fade-in_0.3s_ease]">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                        <!-- Inputs -->
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 mb-1 ml-1">رمز الدخول المراد تعيينه <span class="text-red-500">*</span></label>
+                            <input id="new-u" type="text" class="input-premium">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 mb-1 ml-1">كلمة المرور المشفرة <span class="text-red-500">*</span></label>
+                            <input id="new-p" type="text" class="input-premium">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 mb-1 ml-1">رتبة المستخدم <span class="text-red-500">*</span></label>
+                            <select id="new-role" class="input-premium bg-[var(--bg-app)] cursor-pointer">
+                                <option value="user">مستثمر عادي</option>
+                                <option value="admin">مدير لوحة</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 mb-1 ml-1">إيداع أولي (IQD) <span class="text-red-500">*</span></label>
+                            <input id="new-amt" type="number" class="input-premium" value="0">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 mb-1 ml-1">هامش الربح التلقائي / الدورة</label>
+                            <input id="new-profit-amt" type="number" class="input-premium" value="0">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 mb-1 ml-1">دورة الربح بالزمن (ساعة)</label>
+                            <input id="new-profit-interval" type="number" class="input-premium" value="0">
+                        </div>
+                    </div>
+                    <div class="mt-6 flex justify-end">
+                        <button onclick="saveAccount()" class="bg-slate-800 dark:bg-white text-white dark:text-black font-bold py-2.5 px-8 rounded-lg transition hover:opacity-80">
+                            اعتماد وإنشاء المحفظة
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Sleek Datatable -->
+                <div class="premium-card relative z-10 w-full">
+                    <div class="overflow-x-auto lg:overflow-visible min-h-[300px]">
+                        <table class="w-full text-sm text-right">
+                            <thead class="text-xs text-slate-500 bg-[var(--bg-app)] uppercase border-b border-[var(--border-subtle)]">
+                                <tr>
+                                    <th scope="col" class="px-6 py-4 font-bold">المستثمر</th>
+                                    <th scope="col" class="px-6 py-4 font-bold">الرصيد الأساسي</th>
+                                    <th scope="col" class="px-6 py-4 font-bold">الأرباح الموزعة</th>
+                                    <th scope="col" class="px-6 py-4 font-bold text-center">النظام الآلي</th>
+                                    <th scope="col" class="px-6 py-4 font-bold text-left">إدارة</th>
+                                </tr>
+                            </thead>
+                            <tbody id="users-table-body" class="divide-y divide-[var(--border-subtle)]">
+                                <!-- JS Inject -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Investor Dashboard Section -->
+            <div id="user-box" class="hidden space-y-6 max-w-4xl mx-auto">
+                
+                <h2 class="text-2xl font-extrabold mb-4">نظرة عامة على المحفظة</h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Balance Metric -->
+                    <div class="premium-card p-6 md:p-8 flex flex-col justify-between">
+                        <div class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+                           <i class='bx bx-wallet text-xl text-blue-500'></i> إجمالي الأصول المتاحة
+                        </div>
+                        <div id="balance-txt" class="text-4xl md:text-5xl font-black text-[var(--text-primary)]">
+                            0 <span class="text-xl text-slate-500 font-bold">IQD</span>
+                        </div>
+                    </div>
+
+                    <!-- Profit Metric -->
+                    <div class="premium-card p-6 md:p-8 flex flex-col justify-between">
+                        <div class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+                           <i class='bx bx-trending-up text-xl text-emerald-500'></i> العائد الاستثماري
+                        </div>
+                        <div id="profit-txt" class="text-4xl md:text-5xl font-black text-[var(--text-primary)]">
+                            0 <span class="text-xl text-slate-500 font-bold">IQD</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Growth Chart -->
+                <div class="premium-card p-6 h-64 md:h-80 flex flex-col justify-center relative w-full">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-bold text-sm text-slate-500 uppercase tracking-wide">النمو الاستثماري والمقاصة</h3>
+                    </div>
+                    <div class="relative w-full flex-1">
+                        <canvas id="investorChart"></canvas>
+                    </div>
+                </div>
+                
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Edit User Modal -->
+    <div id="edit-user-modal" class="hidden fixed inset-0 z-50 modal-overlay flex items-center justify-center p-4 transition-opacity duration-300 opacity-0">
+        <div class="premium-card w-full max-w-lg p-6 md:p-8 transform scale-95 transition-transform duration-300" id="edit-modal-content">
+            <div class="flex justify-between items-center mb-6 border-b border-[var(--border-subtle)] pb-4">
+                <h3 class="text-lg font-bold flex items-center gap-2">
+                    تعديل بيانات المحفظة
+                </h3>
+                <button onclick="closeEditModal()" class="text-slate-400 hover:text-red-500 text-xl font-bold">&times;</button>
+            </div>
+            
+            <input type="hidden" id="edit-old-u">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1 ml-1">معرف الدخول</label>
+                    <input id="edit-u" type="text" class="input-premium">
+                </div>
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1 ml-1">الرقم السري</label>
+                    <input id="edit-p" type="text" class="input-premium">
+                </div>
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1 ml-1">التصنيف</label>
+                    <select id="edit-role" class="input-premium bg-[var(--bg-app)]">
+                        <option value="user">مستثمر عادي</option>
+                        <option value="admin">مدير لوحة</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1 ml-1">الرصيد الأساسي (IQD)</label>
+                    <input id="edit-amt" type="number" class="input-premium">
+                </div>
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1 ml-1">إعدادات الدورة (الأرباح)</label>
+                    <input id="edit-profit-amt" type="number" class="input-premium">
+                </div>
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1 ml-1">زمن الدورة (بالساعات)</label>
+                    <input id="edit-profit-interval" type="number" class="input-premium">
+                </div>
+            </div>
+            
+            <div class="mt-6 flex justify-end gap-2 pt-4">
+                <button onclick="closeEditModal()" class="px-4 py-2 text-sm font-bold rounded-lg border border-[var(--border-subtle)] hover:bg-[var(--border-subtle)] transition">تجاهل</button>
+                <button onclick="saveEditAccount()" class="px-4 py-2 text-sm font-bold rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition">حفظ التغييرات</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Account Details (Statement) Modal -->
+    <div id="details-modal" class="hidden fixed inset-0 z-50 modal-overlay flex items-center justify-center p-4 transition-opacity duration-300 opacity-0">
+        <div class="premium-card w-full max-w-md p-6 transform scale-95 transition-transform duration-300" id="details-modal-content">
+            <div class="flex justify-between items-center mb-4 border-b border-[var(--border-subtle)] pb-3">
+                <h3 class="text-lg font-bold flex items-center gap-2">
+                    <i class='bx bx-file text-blue-500'></i> كشف حساب المستثمر
+                </h3>
+                <button onclick="closeDetailsModal()" class="text-slate-400 hover:text-red-500 text-xl font-bold">&times;</button>
+            </div>
+            
+            <div class="space-y-3 text-sm" id="details-body">
+                <!-- Javascript will inject table-like info here -->
+            </div>
+            
+            <div class="mt-6 flex justify-end pt-4">
+                <button onclick="closeDetailsModal()" class="w-full px-4 py-2 font-bold rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition">إغلاق الكشف</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('service-worker.js').catch(err => {
+                    console.log('SW Registration failed: ', err);
+                });
+            });
+        }
+    </script>
+</body>
+</html>
